@@ -4,6 +4,7 @@ from pathlib import Path
 CORPORA_DIRS = {
     "NKJP": Path("../korpus-nkjp/output"),
     "WOLNELEKTURY": Path("../korpus-wolnelektury"),
+    "MINIKORPUS": Path("../korpus-mini"),
 }
 
 CORPORA_FILES = {
@@ -20,6 +21,11 @@ CORPORA_FILES["ALL"] = [
 
 def get_corpus_file(corpus_name: str, glob_pattern: str) -> Path:
     if corpus_name not in CORPORA_FILES:
+        raise ValueError(f"Corpus {corpus_name} not found")
+    return list(CORPORA_DIRS[corpus_name].glob(glob_pattern))
+
+def get_text_files(corpus_name: str, glob_pattern: str) -> Path:
+    if corpus_name not in CORPORA_DIRS:
         raise ValueError(f"Corpus {corpus_name} not found")
     return list(CORPORA_DIRS[corpus_name].glob(glob_pattern))
 
