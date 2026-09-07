@@ -3,16 +3,23 @@ from pathlib import Path
 from tokenizers import Tokenizer
 from corpora import get_text_files
 
+VOCAB_SIZES = [16000, 32000, 64000]
+TOKENIZER_CUSTOM_BASES = [
+    "all", "nkjp", "pan_tadeusz", "wolnelektury"
+]
+
+TOKENIZER_ORIGINALS = [ "qwen-v3_8-28b", "bielik-v1", "bielik-v2", "bielik-v3" ]
+
 TOKENIZERS = {
-    "all": "tokenizers/all-tokenizer.json",
-    "bielik-v1": "tokenizers/bielik-v1-tokenizer.json",
-    "bielik-v2": "tokenizers/bielik-v2-tokenizer.json",
-    "bielik-v3": "tokenizers/bielik-v3-tokenizer.json",
-    "nkjp": "tokenizers/nkjp-tokenizer.json",
-    "pan-tadeusz": "tokenizers/pan_tadeusz-tokenizer.json",
-    "qwen-v3-8-28b": "tokenizers/qwen-v3_8-28b-tokenizer.json",
-    "wolnelektury": "tokenizers/wolnelektury-tokenizer.json",
+    f"{base}-vs{vs}": f"tokenizers/{base}-vs{vs}-tokenizer.json"
+    for base in TOKENIZER_CUSTOM_BASES
+    for vs in VOCAB_SIZES
 }
+
+TOKENIZERS.update({
+    f"{base}": f"tokenizers/{base}-tokenizer.json"
+    for base in TOKENIZER_ORIGINALS
+})
 
 TEXT_FILES = [
     ['MINIKORPUS', 'Fryderyk Chopin', 'fryderyk-chopin-wikipedia.txt'],
@@ -43,10 +50,10 @@ def main():
     tokenizer_stats = {tokenizer_name: 0 for tokenizer_name in TOKENIZERS.keys()}
     corpus_results = {}
     
-    for corpora_dir, text_name, glob_pattern in TEXT_FILES:
+    for corpora_file, text_name, glob_pattern in TEXT_FILES:
         try:
-            print(f"\nLoading corpus '{corpora_dir}' with pattern '{glob_pattern}'...")
-            source_text = load_corpus_text(corpora_dir, glob_pattern)
+            print(f"\nLoading corpus '{corpora_file}' with pattern '{glob_pattern}'...")
+            source_text = load_corpus_text(corpora_file, glob_pattern)
             print(f"Loaded {len(source_text)} characters")
 
             fmt_text_name = text_name.replace(' ', '_').lower()
@@ -63,7 +70,7 @@ def main():
                     
                     log_file = logs_dir / f"tokenized-{fmt_text_name}-{tokenizer_name}.log"
                     with open(log_file, 'w', encoding='utf-8') as f:
-                        f.write(f"Corpus: {corpora_dir}\n")
+                        f.write(f"Corpus: {corpora_file}\n")
                         f.write(f"Pattern: {glob_pattern}\n")
                         f.write(f"Tokenizer: {tokenizer_name}\n")
                         f.write(f"Liczba tokenów: {token_count}\n")
@@ -72,7 +79,7 @@ def main():
                     
                 except Exception as e:
                     print(f"Error tokenizing with '{tokenizer_name}': {str(e)}", file=sys.stderr)
-                    sys.exit(1)
+                    continue
         
         except Exception as e:
             print(f"Error: {str(e)}", file=sys.stderr)
